@@ -185,21 +185,8 @@ impl Bot {
                 // Spin the roulette wheel.
                 let num = rand::rng().random_range(1..=6);
                 if num == 6 {
-                    self.client
-                        .send_chat_message_reply(
-                            &subscription.condition.broadcaster_user_id,
-                            &subscription.condition.user_id,
-                            &payload.message_id,
-                            format!(
-                                "{} took a chance with the revolver, and it went bang! Bye bye {}",
-                                payload.chatter_user_name.as_str(),
-                                payload.chatter_user_name.as_str()
-                            )
-                            .as_str(),
-                            token,
-                        )
-                        .await?;
-                    self.client
+                    if let Err(_) = self
+                        .client
                         .ban_user(
                             &payload.chatter_user_id,
                             "Bro got shot!",
@@ -208,7 +195,36 @@ impl Bot {
                             &subscription.condition.user_id,
                             token,
                         )
-                        .await?;
+                        .await
+                    {
+                        self.client
+                                .send_chat_message(
+                                    &subscription.condition.broadcaster_user_id,
+                                    &subscription.condition.user_id,
+                                    format!(
+                                        "{} took a chance with the revolver, and it went bang! But they were immune!!! The bullet richochets off their body.",
+                                        payload.chatter_user_name.as_str()
+                                    )
+                                    .as_str(),
+                                    token,
+                                )
+                                .await?;
+                    } else {
+                        self.client
+                                .send_chat_message_reply(
+                                    &subscription.condition.broadcaster_user_id,
+                                    &subscription.condition.user_id,
+                                    &payload.message_id,
+                                    format!(
+                                        "{} took a chance with the revolver, and it went bang! Bye bye {}",
+                                        payload.chatter_user_name.as_str(),
+                                        payload.chatter_user_name.as_str()
+                                    )
+                                    .as_str(),
+                                    token,
+                                )
+                                .await?;
+                    }
                 } else {
                     self.client
                         .send_chat_message_reply(
